@@ -121,14 +121,16 @@ SchemasFiles = List[Tuple[str, str]]
 def processSchema(name: str, path: str) -> SchemasFiles:
     schema = json.loads(open(path).read())
     results: SchemasFiles = []
-    for name, type_def in [(name, type_def) for (name, type_def) in dhall_record(schema, name, schema["definitions"])
-                           if type_def]:
+    recs = [(name, type_def) for (name, type_def)
+            in dhall_record(schema, name, schema["definitions"]) if type_def]
+    recs[-1] = ("Resume", recs[-1][1])
+    for name, type_def in recs:
         defaults = " , ".join([
             f"{k} = {v.replace('Optional', 'None')}"
             for k, v in type_def.items()
             if v.startswith("Optional ")])
         results.append((
-            f"Resume/{name}.dhall",
+            f"Resume/Base/{name}.dhall",
             "{ %s }" % " , ".join([
                 "Type = { %s }" % " , ".join([f"{k} : {v}" for k, v in type_def.items()]),
                 "default = { %s }" % (defaults if defaults else "=")])))
